@@ -78,7 +78,7 @@ for count, i in enumerate(preds):
 
 print(len(y_test) - x)
 ```
-##Milestone 5 - Create the vision Model
+## Milestone 5 - Create the vision Model
 
 First, before a Pytorch model could be used, a Pytorch dataset for both the images and text data had to be created. This was my first time using Pytorch and so took quite a while. Eventually these datasets had to be loaded using the Dataloader in the Pytorch library and fed into the text and image models. The Image model was the main focous of this milestone. The model was based on the Resnet50 model, with an additional couple of layers to tune the outputs to 13 output nodes for each class in the dataset. The training took place over 20 epochs with a batch_size of 64. The model had a 25% accuracy after 20 epochs, which initially caused distress as this is very low. However as this will be combined with a text model, and so is not that big of a worry in the end.
 
@@ -227,6 +227,6 @@ if __name__ == "__main__":
     train(model)
 ```
 
-##Milestone 6 - Build the Text model
+## Milestone 6 - Build the Text model
 
 
