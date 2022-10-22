@@ -471,3 +471,84 @@ if __name__ == "__main__":
     writer.flush()
     torch.save(combined.state_dict(), "combined_model.pt")
 ```
+
+## Milestone 8 - Creating and Deploying the API
+
+This was my first time using FastAPI and so it was difficult to get a grasp of what is going on. As i understand it, there are get and post requests. Post requests send data to the api and get requests get data from the API. In my api, the only get request was the health check. There were three post requests, one to send just the text data to predict the category using only the text model, one to send the image data to use only the image model, and one to send both data entries to use the combined model. Setting up the API was relativley easy and i could test each function in a jupyter notebook. Once created a docker image was built and pushed, then was ran using the ec2 set up at the start of the project. The API could then be connected to using the ec2 IPV4 address and tested.
+
+```python
+@app.get('/healthcheck')
+def healthcheck():
+  msg = "API is up and running!"
+  return {"message": msg}
+
+@app.post('/predict/text')
+def predict_text(text: TextItem):
+  
+    ##############################################################
+    # TODO                                                       #
+    # Process the input and use it as input for the text model   #
+    # text.text is the text that the user sent to your API       #
+    # Apply the corresponding methods to compute the category    #
+    # and the probabilities                                      #
+    ##############################################################
+    unbatched = False
+    max_length = 32
+    text_processed = text_processor(text.text, max_length=max_length, unbatched=unbatched)
+    category_pred = text_model.predict_classes(text_processed)
+    probability = text_model.predict_proba(text_processed)
+    #return category_pred, probability
+    return JSONResponse(content={
+        "Category": str(category_pred), # Return the category here
+        "Probabilities": [probability] # Return a list or dict of probabilities here
+        })
+  
+  
+@app.post('/predict/image')
+def predict_image(image: UploadFile = File(...)):
+    pil_image = Image.open(image.file)
+    print("File Uploaded and Opened")
+    ##############################################################
+    # TODO                                                       #
+    # Process the input and use it as input for the image model  #
+    # image.file is the image that the user sent to your API     #
+    # Apply the corresponding methods to compute the category    #
+    # and the probabilities                                      #
+    ##############################################################
+    image_processed = image_processor(pil_image)
+    print("File Processed")
+    category_pred = image_model.predict_classes(image_processed)
+    print("Category Predicted")
+    probability = image_model.predict_proba(image_processed)
+    print("Probability Calculated")
+
+    return JSONResponse(content={
+        "Category": str(category_pred), # Return the category here
+        "Probabilities": [probability] # Return a list or dict of probabilities here
+        })
+  
+@app.post('/predict/combined')
+def predict_combined(image: UploadFile = File(...), text: str = Form(...)):
+    print(text)
+    pil_image = Image.open(image.file)
+    
+    ##############################################################
+    # TODO                                                       #
+    # Process the input and use it as input for the image model  #
+    # image.file is the image that the user sent to your API     #
+    # In this case, text is the text that the user sent to your  #
+    # Apply the corresponding methods to compute the category    #
+    # and the probabilities                                      #
+    ##############################################################
+    unbatched = False
+    max_length = 32
+    image_processed = image_processor(pil_image)
+    text_processed = text_processor(text, max_length=max_length, unbatched=unbatched)
+    combined_cat = combined_model.predict_classes(image_processed, text_processed)
+    combined_prob = combined_model.predict_proba(image_processed, text_processed)
+
+    return JSONResponse(content={
+    "Category": str(combined_cat), # Return the category here
+    "Probabilities": [combined_prob] # Return a list or dict of probabilities here
+        })
+```
